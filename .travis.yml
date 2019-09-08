@@ -27,11 +27,11 @@ matrix:
     before_install:
       - brew update
       - brew install gcc@4.9 || true
-      - brew link --overwrite gcc
-      - brew install libomp
-      - brew link --overwrite libomp
-      - brew install llvm
-      - brew install lapack
+      # - brew link --overwrite gcc
+      # - brew install libomp
+      # - brew link --overwrite libomp
+      # - brew install llvm
+      # - brew install lapack
       - export FC=gfortran;
       - brew install openmpi
     install:
