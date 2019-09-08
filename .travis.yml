@@ -26,7 +26,7 @@ matrix:
     sudo: enabled
     before_install:
       - brew update
-      - brew install gcc || true
+      - brew install gcc@4.9 || true
       - brew link --overwrite gcc
       - brew install libomp
       - brew link --overwrite libomp
@@ -38,7 +38,7 @@ matrix:
       - mkdir build
       - cd build
     script:
-      - cmake -DTesting=ON ../
+      - cmake -DTesting=ON -DCMAKE_C_COMPILER=`which gcc-4.9` -DCMAKE_Fortran_COMPILER=`which gfortran` ../
       - make
       - export OMP_NUM_THREADS=1
       - make test
