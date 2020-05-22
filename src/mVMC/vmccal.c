@@ -951,7 +951,7 @@ void outputCfg(const int sample,const int *eleCfg,const int *eleNum){
       }
     }
     printf(" ");
-    if(ri%L_x==L_x-1) printf("\n");
+    if(ri%L_x==2*L_x-1) printf("\n");
   }
   /* Count electrons with up/down spin */
   for(ri=0;ri<Nsite;ri++){
@@ -968,7 +968,7 @@ void outputCfg(const int sample,const int *eleCfg,const int *eleNum){
     printf("##sample=%d  orbi=%d Stot=%f Nup=%d Ndn=%d \n",sample,orbi,st,nup,ndn);
   }
   /* Energy */
-  printf("##sample=%d E = %.18e \n\n",sample,Etot/Wc);
+  printf("##sample=%d E = %.18e \n\n",sample,Etot/(sample+1));
   
   return; 
 }
