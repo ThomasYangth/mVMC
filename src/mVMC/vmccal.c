@@ -966,7 +966,6 @@ void outputCfg(const int sample,const double energy,const int *eleCfg,const int 
   
   /* Count electrons with up/down spin */
   for(si=0;si<2;si++){
-#pragma omp parallel for default(shared) private(ri,orbi)
     for(ri=0;ri<Nsite;ri++){
       orbi=(int)ri/ns;   
       Ntot[orbi][si]+=eleNum[ri+si*Nsite];    
