@@ -181,7 +181,7 @@ void VMCMainCal(MPI_Comm comm) {
 #endif
     if(NVMCCalMode==0) {
       /* Output real space configuration and Sz and <H>*/
-      outputCfg(sample,eleCfg,eleNum);
+	outputCfg(sample,eleCfg,eleNum);
 
       /* Calculate O for correlation fauctors */
       srOptO[0] = 1.0+0.0*I;//   real 
@@ -926,7 +926,7 @@ void calculateQCACAQ_real(double *qcacaq, const double *lslca, const double w,
 }
 void outputCfg(const int sample,const int *eleCfg,const int *eleNum){
   int ri,si,orbi;
-  int L_x,L_y,orb_num=2,ns;
+  int i,L_x,L_y,orb_num,ns;
   int Ntot[orb_num][2];
   double Stot[orb_num],st;
   int nup,ndn;
@@ -935,6 +935,11 @@ void outputCfg(const int sample,const int *eleCfg,const int *eleNum){
     for(si=0;si<2;si++){
       Ntot[orbi][si]=0;
     }
+  }
+  for(i=1;i<100;i++){
+    if(i*i==Nsite) orb_num=1;
+    else if(2*i*i==Nsite) orb_num=2;
+    else if(3*i*i==Nsite) orb_num=3;
   }
   
   ns=Nsite/orb_num;
@@ -951,7 +956,7 @@ void outputCfg(const int sample,const int *eleCfg,const int *eleNum){
       }
     }
     printf(" ");
-    if(ri%L_x==2*L_x-1) printf("\n");
+    if(ri%L_x==L_x-1) printf("\n");
   }
   /* Count electrons with up/down spin */
   for(ri=0;ri<Nsite;ri++){
@@ -961,14 +966,14 @@ void outputCfg(const int sample,const int *eleCfg,const int *eleNum){
     }
   }
   for(orbi=0;orbi<orb_num;orbi++){
-    Stot[orbi]=(Ntot[orbi][0]-Ntot[orbi][1])/2;
+    Stot[orbi]=(Ntot[orbi][0]-Ntot[orbi][1])/2.0;
     st=Stot[orbi];
     nup=Ntot[orbi][0];
     ndn=Ntot[orbi][1];
     printf("##sample=%d  orbi=%d Stot=%f Nup=%d Ndn=%d \n",sample,orbi,st,nup,ndn);
   }
   /* Energy */
-  printf("##sample=%d E = %.18e \n\n",sample,Etot/(sample+1));
+  printf("##sample=%d E = %.18e \n\n",sample,Etot/Wc);
   
   return; 
 }
