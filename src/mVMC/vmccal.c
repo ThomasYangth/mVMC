@@ -68,6 +68,8 @@ void calculateQCACAQ_real(double *qcacaq, const double *lslca, const double w,
                           const int nLSHam, const int nCA, const int nCACA,
                           int **cacaIdx);
 
+void outputCfg(const int sample,const int *eleCfg,const int *eleNum);
+
 void VMCMainCal(MPI_Comm comm) {
   int *eleIdx,*eleCfg,*eleNum,*eleProjCnt;
   double complex e,ip;
@@ -178,6 +180,9 @@ void VMCMainCal(MPI_Comm comm) {
     printf("  Debug: sample=%d: calculateOpt \n",sample);
 #endif
     if(NVMCCalMode==0) {
+      /* Output real space configuration and Sz and <H>*/
+      outputCfg(sample,eleCfg,eleNum);
+
       /* Calculate O for correlation fauctors */
       srOptO[0] = 1.0+0.0*I;//   real 
       srOptO[1] = 0.0+0.0*I;//   real 
@@ -918,5 +923,53 @@ void calculateQCACAQ_real(double *qcacaq, const double *lslca, const double w,
 
   return;
 
+}
+void outputCfg(const int sample,const int *eleCfg,const int *eleNum){
+  int ri,si,orbi;
+  int L_x,L_y,orb_num=2,ns;
+  int Ntot[orb_num][2];
+  double Stot[orb_num],st;
+  int nup,ndn;
+
+  for(orbi=0;orbi<orb_num;orbi++){
+    for(si=0;si<2;si++){
+      Ntot[orbi][si]=0;
+    }
+  }
+  
+  ns=Nsite/orb_num;
+  L_x=L_y=(int)sqrt(ns);
+  
+  /* Print real space config. */
+  printf("##sample=%d  Real space configuration##\n",sample);
+  for(ri=0;ri<Nsite;ri++){
+    for(si=0;si<2;si++){      
+      if(eleCfg[ri+si*Nsite]<0){
+	printf("0");
+      }else{
+	printf("1");
+      }
+    }
+    printf(" ");
+    if(ri%L_x==L_x-1) printf("\n");
+  }
+  /* Count electrons with up/down spin */
+  for(ri=0;ri<Nsite;ri++){
+    orbi=(int)ri/ns;
+    for(si=0;si<2;si++){      
+      Ntot[orbi][si]+=eleNum[ri+si*Nsite];
+    }
+  }
+  for(orbi=0;orbi<orb_num;orbi++){
+    Stot[orbi]=(Ntot[orbi][0]-Ntot[orbi][1])/2;
+    st=Stot[orbi];
+    nup=Ntot[orbi][0];
+    ndn=Ntot[orbi][1];
+    printf("##sample=%d  orbi=%d Stot=%f Nup=%d Ndn=%d \n",sample,orbi,st,nup,ndn);
+  }
+  /* Energy */
+  printf("##sample=%d E = %.18e \n\n",sample,Etot/Wc);
+  
+  return; 
 }
 #endif
