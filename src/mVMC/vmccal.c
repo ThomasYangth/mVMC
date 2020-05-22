@@ -80,6 +80,7 @@ void VMCMainCal(MPI_Comm comm) {
   const int qpStart=0;
   const int qpEnd=NQPFull;
   int sample,sampleStart,sampleEnd,sampleSize;
+  int Nsample;
   int i,info,tmp_i;
 
   /* optimazation for Kei */
@@ -181,9 +182,8 @@ void VMCMainCal(MPI_Comm comm) {
 #endif
     if(NVMCCalMode==0) {
       /* Output real space configuration and Sz and <H>*/
-      if((sampleEnd-sampleStart)<10){
-	outputCfg(sample,e,eleCfg,eleNum);
-      }else if((sample-sampleStart) % ((sampleEnd-sampleStart)/20) == 0){
+      Nsample=sampleEnd-sampleStart;
+      if(Nsample<10 || (sample-sampleStart) % (Nsample/10) == 0){       
 	outputCfg(sample,e,eleCfg,eleNum);
       }
       /* Calculate O for correlation fauctors */
@@ -933,13 +933,15 @@ void outputCfg(const int sample,const double energy,const int *eleCfg,const int 
   int Ntot[orb_num][2];
   double Stot[orb_num],st;
   int nup,ndn;
-
+  
+#pragma omp parallel for default(shared) private(orbi,si)
   for(orbi=0;orbi<orb_num;orbi++){
     for(si=0;si<2;si++){
       Ntot[orbi][si]=0;
     }
   }
-  for(i=1;i<100;i++){
+  
+  for(i=1;i<16;i++){
     if(i*i==Nsite) orb_num=1;
     else if(2*i*i==Nsite) orb_num=2;
     else if(3*i*i==Nsite) orb_num=3;
@@ -961,13 +963,16 @@ void outputCfg(const int sample,const double energy,const int *eleCfg,const int 
     printf(" ");
     if(ri%L_x==L_x-1) printf("\n");
   }
+  
   /* Count electrons with up/down spin */
-  for(ri=0;ri<Nsite;ri++){
-    orbi=(int)ri/ns;
-    for(si=0;si<2;si++){      
-      Ntot[orbi][si]+=eleNum[ri+si*Nsite];
+  for(si=0;si<2;si++){
+#pragma omp parallel for default(shared) private(ri,orbi)
+    for(ri=0;ri<Nsite;ri++){
+      orbi=(int)ri/ns;   
+      Ntot[orbi][si]+=eleNum[ri+si*Nsite];    
     }
   }
+   
   for(orbi=0;orbi<orb_num;orbi++){
     Stot[orbi]=(Ntot[orbi][0]-Ntot[orbi][1])/2.0;
     st=Stot[orbi];
