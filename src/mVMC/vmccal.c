@@ -68,7 +68,7 @@ void calculateQCACAQ_real(double *qcacaq, const double *lslca, const double w,
                           const int nLSHam, const int nCA, const int nCACA,
                           int **cacaIdx);
 
-void outputCfg(const int sample,const int *eleCfg,const int *eleNum);
+void outputCfg(const int sample,const double energy,const int *eleCfg,const int *eleNum);
 
 void VMCMainCal(MPI_Comm comm) {
   int *eleIdx,*eleCfg,*eleNum,*eleProjCnt;
@@ -181,8 +181,11 @@ void VMCMainCal(MPI_Comm comm) {
 #endif
     if(NVMCCalMode==0) {
       /* Output real space configuration and Sz and <H>*/
-	outputCfg(sample,eleCfg,eleNum);
-
+      if((sampleEnd-sampleStart)<10){
+	outputCfg(sample,e,eleCfg,eleNum);
+      }else if((sample-sampleStart) % ((sampleEnd-sampleStart)/20) == 0){
+	outputCfg(sample,e,eleCfg,eleNum);
+      }
       /* Calculate O for correlation fauctors */
       srOptO[0] = 1.0+0.0*I;//   real 
       srOptO[1] = 0.0+0.0*I;//   real 
@@ -924,7 +927,7 @@ void calculateQCACAQ_real(double *qcacaq, const double *lslca, const double w,
   return;
 
 }
-void outputCfg(const int sample,const int *eleCfg,const int *eleNum){
+void outputCfg(const int sample,const double energy,const int *eleCfg,const int *eleNum){
   int ri,si,orbi;
   int i,L_x,L_y,orb_num,ns;
   int Ntot[orb_num][2];
@@ -973,7 +976,7 @@ void outputCfg(const int sample,const int *eleCfg,const int *eleNum){
     printf("##sample=%d  orbi=%d Stot=%f Nup=%d Ndn=%d \n",sample,orbi,st,nup,ndn);
   }
   /* Energy */
-  printf("##sample=%d E = %.18e \n\n",sample,Etot/Wc);
+  printf("##sample=%d E = %.18e \n\n",sample,energy);
   
   return; 
 }
