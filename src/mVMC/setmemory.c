@@ -40,6 +40,9 @@ void SetMemoryDef() {
   double *pDouble;
 
   /* Int */
+  /* InEleIdx = (int*)malloc(sizeof(int)*(2*Ne)); */
+  /* InEleCfg = (int*)malloc(sizeof(int)*(2*Nsite)); */
+  
   LocSpn = (int*)malloc(sizeof(int)*NTotalDefInt);
   pInt = LocSpn + Nsite;
 
@@ -188,6 +191,13 @@ void SetMemoryDef() {
   for(i=0;i<NQPOptTrans;i++) {
     QPOptTransSgn[i] = pInt;
     pInt += Nsite;
+  }
+
+  if(FlagInEleCfg==1){
+    InEleCfg = pInt;
+    pInt += 2*Nsite;  
+    InEleIdx = pInt;
+    pInt += 2*Ne;
   }
 
   OptFlag = pInt;
@@ -430,6 +440,9 @@ void FreeMemory() {
   free(EleProjCnt);
   free(EleIdx);
   free(EleCfg);
+
+  /* free(InEleIdx); */
+  /* free(InEleCfg); */
 
   free(Para);
 

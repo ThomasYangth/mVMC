@@ -101,6 +101,8 @@ int GetInfoOrbitalGeneral(FILE *fp, int **Array, int *ArrayOpt, int **ArraySgn, 
 int
 GetInfoOneBodyG(FILE *fp, int **ArrayIdx, int **ArrayToIdx, int _NLanczosMode, int Nsite, int NArray, char *defname);
 
+int GetInEleCfgInfo(FILE *fp,int *InEleIdx, int *InEleCfg, int Nsite, int Ne, char *defname);
+
 char *ReadBuffInt(FILE *fp, int *iNbuf) {
   char *cerr;
   char ctmp[D_FileNameMax];
@@ -295,6 +297,7 @@ int CountOneBodyGForLanczos(char *xNameListFile, int Nca, int Ncacadc, int Ns, i
 int ReadDefFileNInt(char *xNameListFile, MPI_Comm comm) {
   FILE *fp;
   char defname[D_FileNameMax];
+  char ctmp[D_FileNameMax];
   char *cerr;
 
   int rank, info = 0;
@@ -480,6 +483,11 @@ int ReadDefFileNInt(char *xNameListFile, MPI_Comm comm) {
 #endif
             break;
 
+	  case KWInEleCfg:
+	    cerr = fgets(ctmp, sizeof(ctmp) / sizeof(char), fp);
+	    FlagInEleCfg = 1;
+	    break;
+
           default:
             cerr = "";
             break;
@@ -595,6 +603,7 @@ int ReadDefFileNInt(char *xNameListFile, MPI_Comm comm) {
   MPI_Bcast(&NSRCG, 1, MPI_INT, 0, comm); // for NCG
   MPI_Bcast(&AllComplexFlag, 1, MPI_INT, 0, comm); // for Real
   MPI_Bcast(&iFlgOrbitalGeneral, 1, MPI_INT, 0, comm); // for fsz
+  MPI_Bcast(&FlagInEleCfg, 1, MPI_INT, 0, comm); // for Inelecfg
   MPI_Bcast(bufDouble, nBufDouble, MPI_DOUBLE, 0, comm);
   MPI_Bcast(CDataFileHead, nBufChar, MPI_CHAR, 0, comm);
   MPI_Bcast(CParaFileHead, nBufChar, MPI_CHAR, 0, comm);
@@ -644,7 +653,7 @@ int ReadDefFileNInt(char *xNameListFile, MPI_Comm comm) {
   DSROptStaDel = bufDouble[IdxSROptStaDel];
   DSROptStepDt = bufDouble[IdxSROptStepDt];
   DSROptCGTol = bufDouble[IdxSROptCGTol];
-  TwoSz = bufInt[Idx2Sz];
+  TwoSz = bufInt[Idx2Sz];  
 
   if (NMPTrans < 0) {
     APFlag = 1; /* anti-periodic boundary */
@@ -721,6 +730,14 @@ int ReadDefFileNInt(char *xNameListFile, MPI_Comm comm) {
 
   if (NBackFlowIdx > 0) {
     NTotalDefInt += Nsite * Nsite * Nsite * Nsite; /* BackflowIdx */
+  }
+
+  /* debug */
+  //printf("rank=%d FlagInEleCfg=%d\n",rank,FlagInEleCfg);
+  /* debug */
+  
+  if(FlagInEleCfg == 1){
+    NTotalDefInt += 2*Ne + 2*Nsite; /* InEleIdx & InEleCfg */
   }
 
   NTotalDefDouble =
@@ -941,6 +958,13 @@ int ReadDefFileIdxPara(char *xNameListFile, MPI_Comm comm) {
             }
           }
           break;
+
+      case KWInEleCfg: /* elecfg.def--------------------------------------*/
+	if (GetInEleCfgInfo(fp, InEleIdx, InEleCfg, Nsite, Ne, defname) != 0) info = 1;
+	for(int msi=0;msi<2*Ne;msi++) printf("[debug:eleidx] %d %d\n",msi,InEleIdx[msi]);
+	printf("\n");
+	for(int rsi=0;rsi<2*Nsite;rsi++) printf("[debug:elecfg] %d %d\n",rsi,InEleCfg[rsi]);
+	break;
 
         default:
           break;
@@ -1488,6 +1512,7 @@ void SetDefaultValuesModPara(int *bufInt, double *bufDouble) {
   bufInt[IdxNNz] = 0;
   bufInt[Idx2Sz] = -1;// -1: sz is not fixed :fsz
   bufInt[IdxNCond] = -1;
+  bufInt[IdxNRealCfg] = 0;
 
   bufDouble[IdxSROptRedCut] = 0.001;
   bufDouble[IdxSROptStaDel] = 0.02;
@@ -1608,6 +1633,8 @@ int GetInfoFromModPara(int *bufInt, double *bufDouble) {
               NStoreO = (int) dtmp;
             } else if (CheckWords(ctmp, "NSRCG") == 0) {
               NSRCG = (int) dtmp;
+	    } else if (CheckWords(ctmp, "NRealCfg") == 0) {
+              NRealCfg = (int) dtmp;
             } else {
               fprintf(stderr, "  Error: keyword \" %s \" is incorrect. \n", ctmp);
               iret = ReadDefFileError(defname);
@@ -2315,6 +2342,24 @@ int GetInfoOrbitalParallel(FILE *fp, int **Array, int *ArrayOpt, int **ArraySgn,
     info = ReadDefFileError(defname);
   }
 
+  return info;
+}
+
+int GetInEleCfgInfo(FILE *fp,int *InEleIdx, int *InEleCfg, int Nsite, int Ne, char *defname){
+  char ctmp2[256];
+  int info=0;
+  int ri,si,mi,msi,rsi;
+  
+  if (FlagInEleCfg == 0) return 1;
+  while (fgets(ctmp2, sizeof(ctmp2) / sizeof(char), fp) != NULL){
+    sscanf(ctmp2, "%d %d %d\n", &ri, &si, &mi);    
+    InEleCfg[ri+si*Nsite]=mi;
+    if(mi>=0) InEleIdx[mi+si*Ne]=ri;
+    //printf("%d %d %d\n",ri,si,InEleCfg[ri+si*Nsite]);
+  }
+  /* for(msi=0;msi<2*Ne;msi++) printf("[debug:eleidx] %d %d\n",msi,InEleIdx[msi]); */
+  /* printf("\n"); */
+  /* for(rsi=0;rsi<2*Nsite;rsi++) printf("[debug:elecfg] %d %d\n",rsi,InEleCfg[rsi]); */
   return info;
 }
 /**********************************/

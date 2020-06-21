@@ -116,6 +116,7 @@ void OutputOptData() {
     }
 
     count_i=2;
+    
     if(NGutzwillerIdx !=0){
       sprintf(fileName, "%s_gutzwiller_opt.dat", CParaFileHead);
       Child_OutputOptData(fp, fileName, "NGutzwillerIdx",

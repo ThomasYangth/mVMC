@@ -265,6 +265,18 @@ int makeInitialSample(int *eleIdx, int *eleCfg, int *eleNum, int *eleProjCnt,
         }
       }
     }
+
+    /* use Initial configuration */
+    if(FlagInEleCfg==1){
+      #pragma omp parallel for default(shared) private(msi)
+      for(msi=0;msi<nsize;msi++) eleIdx[msi] = InEleIdx[msi];
+      #pragma omp parallel for default(shared) private(rsi)
+      for(rsi=0;rsi<nsite2;rsi++) eleCfg[rsi] = InEleCfg[rsi];
+      //FlagInEleCfg=0;
+    }
+    for(msi=0;msi<nsize;msi++) printf("[debug:eleidx] rank=%d %d %d\n",rank,msi,eleIdx[msi]);
+    printf("\n");
+    for(rsi=0;rsi<nsite2;rsi++) printf("[debug:elecfg] rank=%d %d %d\n",rank,rsi,eleCfg[rsi]);;
     
     /* EleNum */
     #pragma omp parallel for default(shared) private(rsi)

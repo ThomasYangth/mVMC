@@ -80,6 +80,8 @@ int NExUpdatePath; /* update by exchange hopping  0: off, 1: on */
 
 int RndSeed; /* seed for pseudorandom number generator */
 int NSplitSize; /* the number of inner MPI processes */
+
+int NRealCfg; /* choice of electron configuration output  0: off, 1:on */
  
 /* total length of def array */
 int NTotalDefInt, NTotalDefDouble;
@@ -213,6 +215,10 @@ int *TmpEleProjCnt;
 int *TmpEleSpn;
 int *TmpEleProjBFCnt;
 //[e] MERGE BY TM
+
+int *InEleIdx;
+int *InEleCfg;
+int FlagInEleCfg=0;;
 
 int *BurnEleIdx;
 int *BurnEleCfg;

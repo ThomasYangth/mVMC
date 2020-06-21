@@ -68,7 +68,7 @@ void calculateQCACAQ_real(double *qcacaq, const double *lslca, const double w,
                           const int nLSHam, const int nCA, const int nCACA,
                           int **cacaIdx);
 
-void outputCfg(const int sample,const double energy,const int *eleCfg,const int *eleNum);
+void outputCfg(const int sample,const double energy,const int *eleCfg,const int *eleNum, const int rank);
 
 void VMCMainCal(MPI_Comm comm) {
   int *eleIdx,*eleCfg,*eleNum,*eleProjCnt;
@@ -182,10 +182,13 @@ void VMCMainCal(MPI_Comm comm) {
 #endif
     if(NVMCCalMode==0) {
       /* Output real space configuration and Sz and <H>*/
-      Nsample=sampleEnd-sampleStart;
-      if(Nsample<10 || (sample-sampleStart) % (Nsample/10) == 0){       
-	outputCfg(sample,e,eleCfg,eleNum);
+      if(NRealCfg==1){
+	Nsample=sampleEnd-sampleStart;
+	if(Nsample<10 || (sample-sampleStart) % (Nsample/10) == 0){       
+	  outputCfg(sample,e,eleCfg,eleNum,rank);
+	}
       }
+      
       /* Calculate O for correlation fauctors */
       srOptO[0] = 1.0+0.0*I;//   real 
       srOptO[1] = 0.0+0.0*I;//   real 
@@ -242,6 +245,14 @@ void VMCMainCal(MPI_Comm comm) {
       StopTimer(43);
 
     } else if(NVMCCalMode==1) {
+      /* Output real space configuration and Sz and <H>*/
+      if(NRealCfg==1){
+	Nsample=sampleEnd-sampleStart;
+	if(Nsample<10 || (sample-sampleStart) % (Nsample/10) == 0){       
+	  outputCfg(sample,e,eleCfg,eleNum,rank);
+	}
+      }
+      
       StartTimer(42);
       /* Calculate Green Function */
 #ifdef _DEBUG_VMCCAL
@@ -927,7 +938,7 @@ void calculateQCACAQ_real(double *qcacaq, const double *lslca, const double w,
   return;
 
 }
-void outputCfg(const int sample,const double energy,const int *eleCfg,const int *eleNum){
+void outputCfg(const int sample,const double energy,const int *eleCfg,const int *eleNum, const int rank){
   int ri,si,orbi;
   int i,L_x,L_y,orb_num,ns;
   int Ntot[orb_num][2];
@@ -951,6 +962,7 @@ void outputCfg(const int sample,const double energy,const int *eleCfg,const int 
   L_x=L_y=(int)sqrt(ns);
   
   /* Print real space config. */
+  printf("###rank=%d\n",rank);
   printf("##sample=%d  Real space configuration##\n",sample);
   for(ri=0;ri<Nsite;ri++){
     for(si=0;si<2;si++){      
@@ -965,8 +977,8 @@ void outputCfg(const int sample,const double energy,const int *eleCfg,const int 
   }
   
   /* Count electrons with up/down spin */
-  for(si=0;si<2;si++){
-    for(ri=0;ri<Nsite;ri++){
+  for(ri=0;ri<Nsite;ri++){
+    for(si=0;si<2;si++){
       orbi=(int)ri/ns;   
       Ntot[orbi][si]+=eleNum[ri+si*Nsite];    
     }
