@@ -182,6 +182,7 @@ void VMCMainCal(MPI_Comm comm) {
 #endif
     if(NVMCCalMode==0) {
       /* Output real space configuration and Sz and <H>*/
+      //printf("rank=%d NRealCfg=%d\n",rank,NRealCfg);
       if(NRealCfg==1){
 	Nsample=sampleEnd-sampleStart;
 	if(Nsample<10 || (sample-sampleStart) % (Nsample/10) == 0){       

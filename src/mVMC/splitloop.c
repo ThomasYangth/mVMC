@@ -60,8 +60,8 @@ void SplitLoop(int *start, int *end,
     }
   }
 
-  printf("loop=%d,rank=%d,size=%d,ist=%d,ien=%d\n",
-         loopLength,mpiRank,mpiSize,ist,ien);
+  /* printf("loop=%d,rank=%d,size=%d,ist=%d,ien=%d\n", */
+  /*        loopLength,mpiRank,mpiSize,ist,ien); */
 
   *start = ist;
   *end = ien;

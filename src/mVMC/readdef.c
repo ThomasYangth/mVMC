@@ -599,6 +599,7 @@ int ReadDefFileNInt(char *xNameListFile, MPI_Comm comm) {
   
 #ifdef _mpi_use
   MPI_Bcast(bufInt, nBufInt, MPI_INT, 0, comm);
+  MPI_Bcast(&NRealCfg, 1, MPI_INT, 0, comm);
   MPI_Bcast(&NStoreO, 1, MPI_INT, 0, comm); // for NStoreO
   MPI_Bcast(&NSRCG, 1, MPI_INT, 0, comm); // for NCG
   MPI_Bcast(&AllComplexFlag, 1, MPI_INT, 0, comm); // for Real
@@ -2348,18 +2349,45 @@ int GetInfoOrbitalParallel(FILE *fp, int **Array, int *ArrayOpt, int **ArraySgn,
 int GetInEleCfgInfo(FILE *fp,int *InEleIdx, int *InEleCfg, int Nsite, int Ne, char *defname){
   char ctmp2[256];
   int info=0;
+  int ni;  // electron number: 0 or 1
   int ri,si,mi,msi,rsi;
   
   if (FlagInEleCfg == 0) return 1;
+  /* while (fgets(ctmp2, sizeof(ctmp2) / sizeof(char), fp) != NULL){ */
+  /*   sscanf(ctmp2, "%d %d %d\n", &ri, &si, &mi);     */
+  /*   InEleCfg[ri+si*Nsite]=mi; */
+  /*   if(mi>=0) InEleIdx[mi+si*Ne]=ri; */
+  /*   //printf("%d %d %d\n",ri,si,InEleCfg[ri+si*Nsite]); */
+  /* } */
+
   while (fgets(ctmp2, sizeof(ctmp2) / sizeof(char), fp) != NULL){
-    sscanf(ctmp2, "%d %d %d\n", &ri, &si, &mi);    
-    InEleCfg[ri+si*Nsite]=mi;
-    if(mi>=0) InEleIdx[mi+si*Ne]=ri;
+    sscanf(ctmp2, "%d %d %d\n", &ri, &si, &ni);
+    if(ni==0 || ni==1){
+      InEleCfg[ri+si*Nsite]=ni;
+    }else{
+      return 1;
+    }    
     //printf("%d %d %d\n",ri,si,InEleCfg[ri+si*Nsite]);
   }
+
+  for(si=0;si<2;si++){
+    mi=0;
+    for(ri=0;ri<Nsite;ri++){
+      if(InEleCfg[ri+si*Nsite]==1){
+	InEleCfg[ri+si*Nsite]=mi;
+	InEleIdx[mi+si*Ne]=ri;
+	mi++;
+      }else{
+	InEleCfg[ri+si*Nsite]=-1;
+      }
+    }
+    if(mi==Ne-1) return 1;
+  }
+  
   /* for(msi=0;msi<2*Ne;msi++) printf("[debug:eleidx] %d %d\n",msi,InEleIdx[msi]); */
   /* printf("\n"); */
   /* for(rsi=0;rsi<2*Nsite;rsi++) printf("[debug:elecfg] %d %d\n",rsi,InEleCfg[rsi]); */
+  
   return info;
 }
 /**********************************/
